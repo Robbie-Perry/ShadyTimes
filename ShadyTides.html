@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    >
+    <title>Shady Island Times</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #0077be;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .datepicker button {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Shady Island Tides</h1>
+
+    <div class="datepicker">
+        <button id="prev-day">&lt;</button>
+        <input
+          type="date"
+          id="date-picker"
+        >
+        <button id="next-day">&gt;</button>
+    </div>
+
+    <h3 id="date-text"></h3>
+    <table id="data-table"></table>
+
+    <script>
+        const datePicker = document.getElementById('date-picker');
+        const prevDayButton = document.getElementById('prev-day');
+        const nextDayButton = document.getElementById('next-day');
+        const dateText = document.getElementById('date-text')
+
+        var displayDate = new Date()
+        datePicker.value = displayDate.getFullYear() + '-' + (displayDate.getMonth() + 1).toString().padStart(2, '0') + '-' + displayDate.getDate().toString().padStart(2, '0');
+        displayDateText(dateText, displayDate)
+
+        // Add event listeners to arrow buttons
+        prevDayButton.addEventListener('click', () => {
+            displayDate.setDate(displayDate.getDate() - 1)
+            datePicker.value = displayDate.toISOString().substr(0, 10);
+            displayDateText(dateText, displayDate)
+            loadTableData()
+        });
+        nextDayButton.addEventListener('click', () => {
+            displayDate.setDate(displayDate.getDate() + 1)
+            datePicker.value = displayDate.toISOString().substr(0, 10);
+            displayDateText(dateText, displayDate)
+            loadTableData()
+        });
+
+        loadTableData()
+
+        function loadTableData() {
+            let today = new Date()
+
+            const observationMap = new Map();
+
+            var fromDate = new Date(displayDate.getFullYear(), displayDate.getMonth(), displayDate.getDate(), 0, 0, 0, 0);
+            var toDate = new Date(displayDate.getFullYear(), displayDate.getMonth(), displayDate.getDate(), 23, 59, 59, 999);
+
+            if (displayDate <= today) {
+                console.log("Getting water level observations")
+                fetch('https://api-iwls.dfo-mpo.gc.ca/api/v1/stations/5cebf1e13d0f4a073c4bbf8c/data?time-series-code=wlo&from=' + fromDate.toISOString() + '&to=' + toDate.toISOString())
+                    .then(response => response.json())
+                    .then(data => {
+                        data.filter(rowData => {
+                            return filterQuarterHour(rowData.eventDate)
+                        }).forEach(rowData => {
+                            let rowDate = new Date(rowData.eventDate)
+                            observationMap.set(rowDate.toLocaleTimeString(), rowData.value)
+                        })
+                        console.log("Retrieved water level observations")
+
+                        loadTablePredictions(observationMap, fromDate, toDate)
+                    })
+            } else {
+                loadTablePredictions(observationMap, fromDate, toDate)
+            }
+        }
+
+        function loadTablePredictions(observationMap, fromDate, toDate) {
+            fetch('https://api-iwls.dfo-mpo.gc.ca/api/v1/stations/5cebf1e13d0f4a073c4bbf8c/data?time-series-code=wlp&from=' + fromDate.toISOString() + '&to=' + toDate.toISOString())
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('data-table');
+                    table.innerHTML = '';
+
+                    const headers = ['Time', 'Prediction', 'Observation'];
+                    const headerRow = table.insertRow();
+                    headers.forEach(header => {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        headerRow.appendChild(th);
+                    });
+
+
+                    console.log(observationMap)
+                    data.filter(rowData => {
+                        return filterQuarterHour(rowData.eventDate)
+                    }).forEach((rowData, i) => {
+
+                        const row = table.insertRow();
+                        row.style.backgroundColor = getColourFromValue(rowData.value, i);
+                        const cell1 = row.insertCell();
+                        let rowDate = new Date(rowData.eventDate)
+                        let localeTime = rowDate.toLocaleTimeString();
+                        cell1.textContent = localeTime
+
+                        const cell2 = row.insertCell();
+                        cell2.textContent = rowData.value;
+
+                        let observation = observationMap.get(localeTime)
+                        let observationVal = "-"
+                        if (observation != undefined) {
+                            observationVal = observation
+                        }
+
+                        const cell3 = row.insertCell();
+                        cell3.textContent = observationVal
+
+                    });
+
+                });
+        }
+
+        function getColourFromValue(value, rowIndex) {
+            if (value <= 1.05) {
+                if (rowIndex % 2 == 0) {
+                    return "#95d194"
+                } else {
+                    return "#a5dba4"
+                }
+            } else if (value > 1.05 && value < 1.3) {
+                if (rowIndex % 2 == 0) {
+                    return "#e3965b"
+                } else {
+                    return "#e3a16f"
+                }
+            }
+
+        }
+
+        function filterQuarterHour(event) {
+            const eventDate = new Date(event);
+            const minutes = eventDate.getMinutes();
+            return minutes === 0 || minutes === 15 || minutes === 30 || minutes === 45;
+        }
+
+        function displayDateText(dateElement, displayDate) {
+            let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+            let formattedDate = displayDate.toLocaleDateString('en-US', options)
+            dateElement.textContent = formattedDate
+        }
+    </script>
+</body>
+
+</html>
