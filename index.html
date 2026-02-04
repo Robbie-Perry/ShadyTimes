@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Shady Island tide information for planning beach access in Steveston, BC">
+    <meta name="theme-color" content="#0077be">
+    <title>Shady Island Tides</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading tide data...</p>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <h3>Error</h3>
+            <p id="error-message"></p>
+            <div class="modal-actions">
+                <button id="error-retry" class="btn btn-primary">Retry</button>
+                <button id="error-close" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Shady Island Tides</h1>
+            <p class="subtitle">Steveston, Richmond BC</p>
+
+            <!-- Status Sub-bar -->
+            <div id="header-status" class="header-status">
+                <div class="header-status-main">
+                    <span id="header-status-text" class="header-status-text"></span>
+                    <span id="header-tide-level" class="header-tide-level"></span>
+                    <span id="header-trend" class="header-trend"></span>
+                </div>
+                <div id="header-countdown" class="header-countdown"></div>
+            </div>
+        </header>
+
+        <!-- Date Navigation -->
+        <div class="date-navigation">
+            <button id="prev-day" class="nav-button" aria-label="Previous day">&lt;</button>
+            <input type="date" id="date-picker" aria-label="Select date">
+            <button id="next-day" class="nav-button" aria-label="Next day">&gt;</button>
+            <button id="refresh-btn" class="refresh-button" aria-label="Refresh data">⟳</button>
+        </div>
+
+        <!-- Date & Tide Summary -->
+        <div class="date-tide-summary">
+            <div id="date-tide-text" class="date-tide-text"></div>
+        </div>
+
+        <!-- Access Windows -->
+        <div class="info-section">
+            <h3>Access Windows</h3>
+            <div id="access-windows" class="access-windows"></div>
+        </div>
+
+        <!-- Tide Table -->
+        <div class="table-container">
+            <h3>Tide Schedule (24 Hours)</h3>
+            <table class="tide-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Prediction</th>
+                        <th>Observation</th>
+                    </tr>
+                </thead>
+                <tbody id="tide-table-body">
+                    <!-- Dynamically populated -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Legend & Controls -->
+        <div class="footer-section">
+            <div class="legend">
+                <h4>Legend</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color legend-safe"></span>
+                        <span>Accessible (≤1.10m / ≤3' 7")</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color legend-not"></span>
+                        <span>Not Accessible (>1.10m / >3' 7")</span>
+                    </div>
+                </div>
+                <p class="legend-note">Darker green = lower tide (safer access)</p>
+            </div>
+            <div class="unit-control">
+                <button id="unit-toggle" class="btn btn-secondary">Metric / Imperial</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Data from <a href="https://www.dfo-mpo.gc.ca" target="_blank" rel="noopener">DFO-MPO</a> |
+            Times in Pacific Time (PT/PDT)</p>
+            <p class="version">v1.0.0</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="scripts/api.js"></script>
+    <script src="scripts/tides.js"></script>
+    <script src="scripts/ui.js"></script>
+</body>
+
+</html>
